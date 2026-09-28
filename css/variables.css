@@ -1,0 +1,148 @@
+/* ============================================================
+   feito. — CSS Variables & Reset Tokens
+   (Source of truth: feito-DESIGN.md)
+   ============================================================ */
+
+:root {
+  /* Surfaces — DESIGN.md tokens */
+  --bg-dark: #090909;        /* {colors.canvas} */
+  --bg-dark-2: #141414;      /* {colors.surface-card} */
+  --bg-dark-card: #141414;   /* {colors.surface-card} */
+  --bg-light: #F4F4EF;       /* {colors.surface-soft} */
+  --bg-light-card: #ffffff;   /* {colors.on-primary} */
+  --bg-white: #ffffff;
+
+  /* Brand Accent — DESIGN.md {colors.primary} */
+  --accent: #FF5A00;
+  --accent-active: #D94800;  /* {colors.primary-active} */
+  --accent-soft: rgba(255, 90, 0, 0.12);
+  --accent-secondary: #FF8A4C; /* {colors.secondary} */
+
+  /* Typography */
+  --font-h: 'Satoshi', 'Satoshi Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-b: 'Satoshi', 'Satoshi Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Monochrome Scale — DESIGN.md */
+  --text-white: #ffffff;     /* {colors.on-dark} */
+  --text-white-90: rgba(255, 255, 255, 0.9);
+  --text-white-65: rgba(255, 255, 255, 0.65);
+  --text-white-40: rgba(255, 255, 255, 0.4);
+  --text-white-20: rgba(255, 255, 255, 0.2);
+
+  --text-dark: #111111;      /* {colors.ink} */
+  --text-dark-90: rgba(17, 17, 17, 0.9);
+  --text-dark-65: #3D3D3D;   /* {colors.body} */
+  --text-dark-40: #8A8A8A;   /* {colors.muted} */
+
+  /* Glass Tokens */
+  --glass-dark-bg: rgba(20, 20, 20, 0.75);
+  --glass-dark-border: rgba(255, 255, 255, 0.09);
+  --glass-dark-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+
+  --glass-light-bg: #ffffff;
+  --glass-light-border: rgba(0, 0, 0, 0.06);
+
+  /* Hairline / Borders — DESIGN.md {colors.hairline} */
+  --hairline: #2A2A2A;
+
+  /* Layout — DESIGN.md rounded tokens */
+  --max-w: 1240px;
+  --pad: 40px;
+  --radius-xs: 6px;          /* {rounded.xs} */
+  --radius-sm: 10px;         /* {rounded.sm} */
+  --radius-md: 16px;         /* {rounded.md} */
+  --radius-lg: 24px;         /* {rounded.lg} */
+  --radius-xl: 32px;         /* {rounded.xl} */
+  --radius-pill: 9999px;     /* {rounded.full} */
+
+  /* Transitions */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Reset --- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  font-family: var(--font-b);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  background: var(--bg-dark);
+  color: var(--text-white);
+  overflow-x: hidden;
+}
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; }
+button { border: none; background: none; cursor: pointer; font-family: inherit; color: inherit; }
+input, textarea, select { font-family: inherit; }
+ul, ol { list-style: none; }
+
+.container {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+/* --- Typography Helpers — DESIGN.md typography tokens --- */
+h1, h2, h3, h4 {
+  font-family: var(--font-h);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-white);
+}
+
+.dot-orange {
+  color: var(--accent);
+}
+
+/* --- Cinematic Scroll Reveal Animations (Blur & Focal Shift) --- */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(6px);
+  transition: opacity 0.85s var(--ease), transform 0.85s var(--ease), filter 0.85s var(--ease);
+  will-change: opacity, transform, filter;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.95) translateY(24px);
+  filter: blur(8px);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease), filter 0.9s var(--ease);
+  will-change: opacity, transform, filter;
+}
+
+.reveal-scale.is-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}
+
+.reveal-d1 { transition-delay: 0.12s; }
+.reveal-d2 { transition-delay: 0.22s; }
+.reveal-d3 { transition-delay: 0.32s; }
+.reveal-d4 { transition-delay: 0.42s; }
+
+/* Scroll Progress Bar at Top of Viewport */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2.5px;
+  width: 0%;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.6) 100%);
+  z-index: 1000;
+  pointer-events: none;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}

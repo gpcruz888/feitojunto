@@ -1,0 +1,109 @@
+/* ============================================================
+   Buttons & Badges (Liquid Glow & Precision Transitions)
+   ============================================================ */
+
+.btn,
+.btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  min-height: 44px;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), background 0.3s var(--ease), border-color 0.3s var(--ease);
+  will-change: transform;
+}
+
+/* Liquid Shimmer Sweep */
+.btn::after,
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  opacity: 0;
+  transition: none;
+  pointer-events: none;
+}
+
+.btn:hover::after,
+.btn-primary:hover::after {
+  opacity: 1;
+  left: 140%;
+  transition: left 0.75s var(--ease), opacity 0.75s var(--ease);
+}
+
+.btn:active,
+.btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.btn svg,
+.btn-primary svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.3s var(--ease);
+}
+
+.btn:hover svg,
+.btn-primary:hover svg {
+  transform: translateX(4px);
+}
+
+.btn--white,
+.btn-primary {
+  background: var(--text-white);
+  color: var(--text-dark);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.btn--white:hover,
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.btn--glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text-white);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn--glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.btn--whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn--whatsapp svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn--full {
+  width: 100%;
+  justify-content: center;
+}

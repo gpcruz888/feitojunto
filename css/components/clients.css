@@ -1,0 +1,124 @@
+/* ============================================================
+   CLIENTS / TRUST LOGOS SECTION — "mais de 200 projetos criados."
+   ============================================================ */
+
+.clients {
+  padding: 100px 0 110px;
+  background: var(--bg-light);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.clients__header {
+  margin-bottom: 48px;
+}
+
+.clients__title {
+  color: var(--text-dark);
+  font-size: clamp(2rem, 3.2vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.clients__marquee-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 12px 0;
+}
+
+.clients__mask-left,
+.clients__mask-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 160px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.clients__mask-left {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-light) 0%, transparent 100%);
+}
+
+.clients__mask-right {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg-light) 0%, transparent 100%);
+}
+
+.clients__track {
+  display: flex;
+  gap: 68px;
+  width: max-content;
+  align-items: center;
+  animation: clientsMarquee 32s linear infinite;
+  will-change: transform;
+}
+
+.clients__track:hover {
+  animation-play-state: paused;
+}
+
+.clients__group {
+  display: flex;
+  gap: 68px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.client-logo-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.client-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  filter: brightness(0);
+  opacity: 0.72;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.client-logo-item:hover .client-logo-img {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+@keyframes clientsMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .clients {
+    padding: 70px 0 80px;
+  }
+  .clients__header {
+    margin-bottom: 36px;
+  }
+  .clients__track,
+  .clients__group {
+    gap: 40px;
+  }
+  .clients__mask-left,
+  .clients__mask-right {
+    width: 44px;
+  }
+  .client-logo-img {
+    height: 28px;
+    max-width: 120px;
+  }
+}

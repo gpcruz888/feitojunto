@@ -1,0 +1,169 @@
+/* ============================================================
+   PROJECTS — "alguns trabalhos feitos." (Infinite Smooth Marquee)
+   ============================================================ */
+
+.projects {
+  padding: 120px 0;
+  background: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.projects__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 44px;
+  gap: 24px;
+}
+
+.projects__title {
+  font-size: clamp(2rem, 3.2vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.projects__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.projects__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-white-65);
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-dark-border);
+  transition: color 0.25s, border-color 0.25s, transform 0.25s;
+}
+
+.projects__more:hover {
+  color: var(--text-white);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.projects__more svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.25s;
+}
+.projects__more:hover svg {
+  transform: translateX(2px);
+}
+
+/* Carousel Container with Edge Masks */
+.projects__carousel-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 10px 0 20px;
+}
+
+.projects__carousel-mask-left,
+.projects__carousel-mask-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.projects__carousel-mask-left {
+  left: 0;
+  background: linear-gradient(90deg, #090909 0%, transparent 100%);
+}
+
+.projects__carousel-mask-right {
+  right: 0;
+  background: linear-gradient(270deg, #090909 0%, transparent 100%);
+}
+
+/* Hardware-Accelerated 60fps Infinite Marquee Track */
+.projects__marquee {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeRoll 60s linear infinite;
+}
+
+.projects__marquee:hover {
+  animation-play-state: paused;
+}
+
+.projects__marquee-group {
+  display: flex;
+  gap: 20px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+@keyframes marqueeRoll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Project Cards */
+.proj-card {
+  flex: 0 0 320px;
+  width: 320px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-dark-card);
+  border: 1px solid var(--glass-dark-border);
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.6);
+  transition: transform 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  cursor: pointer;
+  transform: translateZ(0);
+}
+
+.proj-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.95);
+}
+
+.proj-card__visual {
+  width: 100%;
+  aspect-ratio: 16/11;
+  overflow: hidden;
+  background: #141414;
+}
+
+.proj-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s var(--ease);
+}
+
+.proj-card:hover .proj-card__img {
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .projects__carousel-mask-left,
+  .projects__carousel-mask-right {
+    width: 36px;
+  }
+  .proj-card {
+    flex: 0 0 250px;
+    width: 250px;
+  }
+  .projects__marquee {
+    animation-duration: 40s;
+  }
+}

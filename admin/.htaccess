@@ -1,0 +1,31 @@
+# ============================================================
+# feito. — Admin Routing Configuration (HostGator / cPanel Ready)
+# ============================================================
+
+Options -Indexes +FollowSymLinks
+DirectoryIndex index.php
+
+<IfModule mod_authz_core.c>
+  Require all granted
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Allow from all
+</IfModule>
+
+RewriteEngine On
+RewriteBase /admin/
+
+# 1. Arquivos estáticos reais (CSS, JS, fontes, imagens, assets)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 2. Endpoints da API administrativa (/admin/api/...)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^api/(.*)$ api/$1 [L]
+
+# 3. Raiz do painel administrativo (/admin ou /admin/)
+RewriteRule ^$ index.php?route=dashboard [QSA,L]
+
+# 4. Roteia TODAS as outras URLs virtuais (/admin/login, /admin/dashboard, etc.)
+RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+

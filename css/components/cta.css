@@ -1,0 +1,182 @@
+/* ============================================================
+   CTA / CONTATO — "sua nova presença digital começa aqui."
+   ============================================================ */
+
+.cta-section {
+  padding: 120px 0;
+  background: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-dark-border);
+  background: radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.04), rgba(18, 18, 18, 0.88) 60%);
+  padding: 56px 60px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+  overflow: hidden;
+}
+
+.cta-card__bg-glow {
+  position: absolute;
+  top: -120px;
+  right: -100px;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cta-card__content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  max-width: 520px;
+}
+
+.cta-card__title {
+  font-size: clamp(2.1rem, 3.4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--text-white);
+  margin-bottom: 20px;
+}
+
+.cta-card__sub {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-white-65);
+  max-width: 500px;
+  margin-bottom: 36px;
+}
+
+.cta-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+.cta__info-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cta__info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-white-65);
+  transition: color 0.25s;
+}
+
+.cta__info-item:hover {
+  color: var(--text-white);
+}
+
+.cta__info-item svg {
+  width: 17px;
+  height: 17px;
+  color: rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+}
+
+/* Briefing Form Container inside CTA */
+.cta-card__form-container {
+  flex: 1;
+  max-width: 490px;
+  width: 100%;
+  background: rgba(14, 14, 14, 0.82);
+  border: 1px solid var(--glass-dark-border);
+  border-radius: var(--radius-xl);
+  padding: 32px 30px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+  z-index: 2;
+}
+
+.cta-card__form-container .form-textarea {
+  min-height: 80px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .cta-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 48px 36px;
+    gap: 40px;
+  }
+
+  .cta-card__content {
+    max-width: 100%;
+  }
+
+  .cta-card__form-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 80px 0;
+  }
+
+  .cta-card {
+    padding: 32px 20px;
+    border-radius: var(--radius-lg);
+    gap: 32px;
+  }
+
+  .cta-card__title {
+    font-size: 1.85rem;
+  }
+
+  .cta-card__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cta-card__actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cta__info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .cta-card__form-container {
+    padding: 24px 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
