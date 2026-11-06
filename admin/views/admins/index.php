@@ -1,11 +1,11 @@
 <?php
 $adminTitle = 'Gerenciamento de Administradores';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
-require_once __DIR__ . '/../../../core/Logger.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Logger.php';
 
 Auth::requireRole('SUPER_ADMIN');
 
@@ -25,9 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Você não pode excluir a sua própria conta.';
                 $messageType = 'error';
             } else {
-                // Checa se é o último SUPER_ADMIN
+                // Checa se é o último SUPER_ADMIN usando consulta parametrizada
                 $superCount = (int)$db->query("SELECT COUNT(*) FROM admins WHERE role = 'SUPER_ADMIN' AND status = 'ATIVO'")->fetchColumn();
-                $targetRole = $db->query("SELECT role FROM admins WHERE id = {$targetId}")->fetchColumn();
+                $roleStmt = $db->prepare("SELECT role FROM admins WHERE id = ?");
+                $roleStmt->execute([$targetId]);
+                $targetRole = $roleStmt->fetchColumn();
 
                 if ($targetRole === 'SUPER_ADMIN' && $superCount <= 1) {
                     $message = 'Não é possível remover o único Super Administrador ativo do sistema.';
@@ -47,12 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Você não pode desativar seu próprio acesso.';
                 $messageType = 'error';
             } else {
-                $newStatus = ($_POST['current_status'] === 'ATIVO') ? 'INATIVO' : 'ATIVO';
-                $up = $db->prepare("UPDATE admins SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-                $up->execute([$newStatus, $targetId]);
-                Logger::log('ADMIN_STATUS_TOGGLED', 'admin', $targetId, "Status do admin #{$targetId} alterado para {$newStatus}");
-                $message = "Status alterado para {$newStatus}.";
-                $messageType = 'success';
+                $newStatus = (($_POST['current_status'] ?? '') === 'ATIVO') ? 'INATIVO' : 'ATIVO';
+                $superCount = (int)$db->query("SELECT COUNT(*) FROM admins WHERE role = 'SUPER_ADMIN' AND status = 'ATIVO'")->fetchColumn();
+                $roleStmt = $db->prepare("SELECT role FROM admins WHERE id = ?");
+                $roleStmt->execute([$targetId]);
+                $targetRole = $roleStmt->fetchColumn();
+
+                if ($newStatus === 'INATIVO' && $targetRole === 'SUPER_ADMIN' && $superCount <= 1) {
+                    $message = 'Não é possível desativar o único Super Administrador ativo do sistema.';
+                    $messageType = 'error';
+                } else {
+                    $up = $db->prepare("UPDATE admins SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+                    $up->execute([$newStatus, $targetId]);
+                    Logger::log('ADMIN_STATUS_TOGGLED', 'admin', $targetId, "Status do admin #{$targetId} alterado para {$newStatus}");
+                    $message = "Status alterado para {$newStatus}.";
+                    $messageType = 'success';
+                }
             }
         }
     }

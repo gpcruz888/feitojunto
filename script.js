@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --- 3. Scroll Reveal Observer & Animated Number Counters --- */
-  const revealElements = document.querySelectorAll('.reveal, .reveal-scale');
+  const revealElements = document.querySelectorAll('.reveal, .reveal-scale, .gestcorp-enter');
   const revealObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach(entry => {
@@ -363,6 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
           tipo_projeto: dataObj.tipo_projeto || 'Geral',
           prazo_orcamento: dataObj.orcamento || 'Não especificado',
           mensagem: dataObj.mensagem || 'Sem mensagem adicional',
+          _hp: dataObj._hp || '',
           _subject: `Novo Projeto Solicitado — ${dataObj.nome} (${dataObj.tipo_projeto || 'Web'})`,
         };
 

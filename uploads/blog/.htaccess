@@ -1,5 +1,7 @@
-# Desativa execução de scripts na pasta de uploads para máxima segurança
-<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|php8|pht|phar|cgi|pl|exe|sh|py|jsp|asp|aspx)$">
+# Desativa listagem de diretórios e execução de scripts na pasta de uploads para máxima segurança
+Options -Indexes -ExecCGI
+
+<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|php8|pht|phar|cgi|pl|exe|sh|py|jsp|asp|aspx|shtml|svg|svgz|html|htm|js)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -7,6 +9,11 @@
         Deny from all
     </IfModule>
 </FilesMatch>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+</IfModule>
 
 # Desativa engine PHP caso o Apache suporte flags locais
 <IfModule mod_php7.c>

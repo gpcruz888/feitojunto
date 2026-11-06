@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../../core/Security.php';
+Security::sendHeaders(true);
+
 require_once __DIR__ . '/../../core/Database.php';
 require_once __DIR__ . '/../../core/Csrf.php';
 require_once __DIR__ . '/../../core/Helpers.php';
@@ -7,38 +10,48 @@ require_once __DIR__ . '/../../core/Env.php';
 
 $message = '';
 $messageType = '';
-$token = trim($_GET['token'] ?? '');
+$token = trim((string)($_GET['token'] ?? ''));
 $validToken = false;
 $adminUser = null;
 
 $db = Database::getInstance();
 
-if (!empty($token)) {
-    // Valida token existente
+if (!empty($token) && preg_match('/^[a-f0-9]{64}$/i', $token)) {
+    $tokenHash = hash('sha256', $token);
+    // Valida token existente (suporta hash SHA-256 e fallback legado com comparação segura)
     $stmt = $db->prepare("
         SELECT * FROM admins 
-        WHERE password_reset_token = ? 
-          AND password_reset_expires_at > CURRENT_TIMESTAMP 
+        WHERE (password_reset_token = ? OR password_reset_token = ?)
+          AND password_reset_expires_at > CURRENT_TIMESTAMP
+          AND status = 'ATIVO'
         LIMIT 1
     ");
-    $stmt->execute([$token]);
+    $stmt->execute([$tokenHash, $token]);
     $adminUser = $stmt->fetch();
     $validToken = (bool)$adminUser;
 }
 
 // Processa envio de solicitação ou redefinição
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $ip = Security::getClientIp();
+
     if (!Csrf::validate()) {
         $message = 'Sessão inválida. Tente novamente.';
         $messageType = 'error';
+    } elseif (Security::isRateLimited($db, 'pwd_reset', $ip, 5, 15)) {
+        Logger::log('PASSWORD_RESET_RATE_LIMITED', 'admin', null, "Limite de tentativas de recuperação de senha excedido (IP: {$ip})");
+        $message = 'Muitas solicitações recentes. Aguarde 15 minutos antes de tentar novamente.';
+        $messageType = 'error';
     } else {
+        Security::recordRateLimitHit($db, 'pwd_reset', $ip);
+
         if (!empty($_POST['new_password']) && $validToken && $adminUser) {
             // Passo 2: Define nova senha
-            $newPass = $_POST['new_password'];
-            $confirmPass = $_POST['confirm_password'] ?? '';
+            $newPass = (string)$_POST['new_password'];
+            $confirmPass = (string)($_POST['confirm_password'] ?? '');
 
-            if (strlen($newPass) < 8) {
-                $message = 'A nova senha deve ter pelo menos 8 caracteres.';
+            if (strlen($newPass) < 8 || strlen($newPass) > 128) {
+                $message = 'A nova senha deve ter entre 8 e 128 caracteres.';
                 $messageType = 'error';
             } elseif ($newPass !== $confirmPass) {
                 $message = 'As senhas digitadas não coincidem.';
@@ -49,10 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     UPDATE admins 
                     SET password_hash = ?, 
                         password_reset_token = NULL, 
-                        password_reset_expires_at = NULL 
+                        password_reset_expires_at = NULL,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 ");
                 $up->execute([$newHash, $adminUser['id']]);
+
+                session_regenerate_id(true);
+                Csrf::rotateToken();
 
                 Logger::log('PASSWORD_RESET_SUCCESS', 'admin', (int)$adminUser['id'], "Senha redefinida via token", (int)$adminUser['id']);
 
@@ -62,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             // Passo 1: Solicita token
-            $email = trim($_POST['email'] ?? '');
+            $email = trim((string)($_POST['email'] ?? ''));
             if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $st = $db->prepare("SELECT * FROM admins WHERE email = ? AND status = 'ATIVO' LIMIT 1");
                 $st->execute([$email]);
@@ -70,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($userFound) {
                     $rawToken = bin2hex(random_bytes(32));
+                    $tokenHash = hash('sha256', $rawToken);
                     $expires = date('Y-m-d H:i:s', time() + 3600); // 1 hora
 
                     $updateToken = $db->prepare("
@@ -77,16 +95,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SET password_reset_token = ?, password_reset_expires_at = ? 
                         WHERE id = ?
                     ");
-                    $updateToken->execute([$rawToken, $expires, $userFound['id']]);
+                    $updateToken->execute([$tokenHash, $expires, $userFound['id']]);
 
-                    // Dispara e-mail de recuperação
-                    $appUrl = rtrim(Env::get('APP_URL', 'https://feitojunto.com'), '/');
+                    // Dispara e-mail de recuperação com cabeçalhos sanitizados
+                    $appUrl = rtrim((string)Env::get('APP_URL', 'https://feitojunto.com'), '/');
                     $resetUrl = "{$appUrl}/admin/recuperar-senha?token={$rawToken}";
-                    $fromEmail = Env::get('MAIL_FROM_EMAIL', 'noreply@feitojunto.com');
-                    $fromName = Env::get('MAIL_FROM_NAME', 'feito. Suporte');
+                    $fromEmail = Security::sanitizeMailHeader((string)Env::get('MAIL_FROM_EMAIL', 'noreply@feitojunto.com'));
+                    if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+                        $fromEmail = 'noreply@feitojunto.com';
+                    }
+                    $fromName = Security::sanitizeMailHeader((string)Env::get('MAIL_FROM_NAME', 'feito. Suporte'));
+                    $safeTargetEmail = Security::sanitizeMailHeader($email);
 
                     $mailBody = "Olá, {$userFound['name']}!\n\nRecebemos uma solicitação para redefinir a sua senha de acesso à área administrativa do feito.\n\nPara cadastrar uma nova senha, acesse o link seguro abaixo (válido por 1 hora):\n{$resetUrl}\n\nSe você não solicitou esta alteração, por favor ignore este e-mail.";
-                    @mail($email, "=?UTF-8?B?" . base64_encode("Redefinição de Senha — feito.") . "?=", $mailBody, "From: {$fromName} <{$fromEmail}>\r\nX-Mailer: PHP/" . phpversion());
+                    @mail($safeTargetEmail, "=?UTF-8?B?" . base64_encode("Redefinição de Senha — feito.") . "?=", $mailBody, "From: {$fromName} <{$fromEmail}>\r\nContent-Type: text/plain; charset=UTF-8");
 
                     Logger::log('PASSWORD_RESET_REQUEST', 'admin', (int)$userFound['id'], "Token de redefinição solicitado para: {$email}");
                 }

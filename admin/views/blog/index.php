@@ -1,11 +1,13 @@
 <?php
 $adminTitle = 'Gerenciamento do Blog';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
-require_once __DIR__ . '/../../../core/Logger.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Logger.php';
+
+Auth::requireLogin();
 
 $db = Database::getInstance();
 
@@ -24,7 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'toggle_status' && $postId > 0) {
-            $newSt = $_POST['new_status'] ?? 'RASCUNHO';
+            $allowedPostStatuses = ['RASCUNHO', 'PUBLICADO', 'ARQUIVADO'];
+            $newSt = in_array($_POST['new_status'] ?? '', $allowedPostStatuses, true) ? $_POST['new_status'] : 'RASCUNHO';
             $pubAt = ($newSt === 'PUBLICADO') ? date('Y-m-d H:i:s') : null;
             $up = $db->prepare("UPDATE posts SET status = ?, published_at = COALESCE(published_at, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?");
             $up->execute([$newSt, $pubAt, $postId]);

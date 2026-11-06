@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
-require_once __DIR__ . '/../../../core/Logger.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Logger.php';
 
 Auth::requireRole('SUPER_ADMIN');
 
@@ -46,8 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errorMessage = 'Preencha o nome e um e-mail válido.';
-        } elseif (!$isEditing && (empty($password) || strlen($password) < 8)) {
-            $errorMessage = 'Para novos usuários, a senha deve ter pelo menos 8 caracteres.';
+        } elseif (!$isEditing && (empty($password) || strlen($password) < 8 || strlen($password) > 128)) {
+            $errorMessage = 'Para novos usuários, a senha deve ter entre 8 e 128 caracteres.';
+        } elseif ($isEditing && $targetId === Auth::id() && ($status === 'INATIVO' || $role !== 'SUPER_ADMIN')) {
+            $errorMessage = 'Por segurança, você não pode desativar ou remover o nível de Super Administrador da sua própria conta.';
         } else {
             // Checa duplicidade de e-mail
             $checkSql = $isEditing 

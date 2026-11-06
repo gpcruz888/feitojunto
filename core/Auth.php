@@ -6,22 +6,12 @@
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Logger.php';
 require_once __DIR__ . '/Env.php';
+require_once __DIR__ . '/Security.php';
+require_once __DIR__ . '/Csrf.php';
 
 class Auth {
     private static function startSession(): void {
-        if (session_status() === PHP_SESSION_NONE) {
-            $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
-                       (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-            session_set_cookie_params([
-                'lifetime' => 0, // Encerra ao fechar o navegador
-                'path' => '/',
-                'domain' => '',
-                'secure' => $isHttps,
-                'httponly' => true,
-                'samesite' => 'Strict'
-            ]);
-            session_start();
-        }
+        Security::startSecureSession();
     }
 
     public static function attempt(string $email, string $password): array {
@@ -55,8 +45,9 @@ class Auth {
             ];
         }
 
-        // 4. Sucesso: regenera ID de sessão para prevenir session fixation
+        // 4. Sucesso: regenera ID de sessão e token CSRF para prevenir session/CSRF fixation
         session_regenerate_id(true);
+        Csrf::rotateToken();
 
         // Limpa tentativas de login anteriores
         self::clearAttempts($db, $ip, $email);
@@ -71,7 +62,8 @@ class Auth {
             'name' => $admin['name'],
             'email' => $admin['email'],
             'role' => $admin['role'],
-            'logged_at' => time()
+            'logged_at' => time(),
+            'last_verified_at' => time()
         ];
 
         Logger::log('LOGIN_SUCCESS', 'admin', (int)$admin['id'], "Login bem-sucedido para: {$email}", (int)$admin['id']);
@@ -86,10 +78,31 @@ class Auth {
             return false;
         }
 
-        // Verifica expiração de inatividade (padrão 6 horas)
+        // Verifica expiração de sessão (padrão 6 horas)
         $maxLifetime = (int)Env::get('SESSION_LIFETIME_HOURS', 6) * 3600;
         if (isset($_SESSION['admin_user']['logged_at']) && (time() - $_SESSION['admin_user']['logged_at'] > $maxLifetime)) {
             self::logout();
+            return false;
+        }
+
+        // Revalida status ativo e papel (RBAC) no banco para revogação imediata de acessos
+        try {
+            $db = Database::getInstance();
+            $stmt = $db->prepare("SELECT id, name, email, role, status FROM admins WHERE id = ? LIMIT 1");
+            $stmt->execute([(int)$_SESSION['admin_user']['id']]);
+            $freshAdmin = $stmt->fetch();
+
+            if (!$freshAdmin || $freshAdmin['status'] !== 'ATIVO') {
+                self::logout();
+                return false;
+            }
+
+            $_SESSION['admin_user']['name'] = $freshAdmin['name'];
+            $_SESSION['admin_user']['email'] = $freshAdmin['email'];
+            $_SESSION['admin_user']['role'] = $freshAdmin['role'];
+            $_SESSION['admin_user']['last_verified_at'] = time();
+        } catch (Exception $e) {
+            error_log("Session revalidation failed: " . $e->getMessage());
             return false;
         }
 
@@ -155,10 +168,17 @@ class Auth {
 
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 42000,
-                $params["path"], $params["domain"],
-                $params["secure"], $params["httponly"]
-            );
+            if (!headers_sent()) {
+                setcookie(session_name(), '', [
+                    'expires' => time() - 42000,
+                    'path' => $params['path'],
+                    'domain' => $params['domain'],
+                    'secure' => $params['secure'],
+                    'httponly' => $params['httponly'],
+                    'samesite' => $params['samesite'] ?? 'Strict'
+                ]);
+                header('Clear-Site-Data: "cookies", "storage"');
+            }
         }
 
         session_destroy();
@@ -189,16 +209,12 @@ class Auth {
     }
 
     private static function clearAttempts(PDO $db, string $ip, string $email): void {
-        $stmt = $db->prepare("DELETE FROM login_attempts WHERE ip_address = ? OR email = ?");
+        $stmt = $db->prepare("DELETE FROM login_attempts WHERE ip_address = ? AND email = ?");
         $stmt->execute([$ip, $email]);
     }
 
     private static function getClientIp(): string {
-        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        if (str_contains($ip, ',')) {
-            $ip = trim(explode(',', $ip)[0]);
-        }
-        return $ip;
+        return Security::getClientIp();
     }
 
     private static function isAjax(): bool {

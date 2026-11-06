@@ -1,0 +1,26 @@
+# Ambiente e Segredos
+.env
+.env.*
+!.env.example
+
+# Banco de Dados Local / Produção e Backups
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/*.db
+data/backups/
+
+# Uploads dinâmicos (mantém apenas .htaccess)
+uploads/blog/*
+!uploads/blog/.htaccess
+
+# Arquivos de Sistema e Editor
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.swp
+.idea/
+.vscode/
+

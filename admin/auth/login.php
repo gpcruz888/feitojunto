@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../../core/Security.php';
+Security::sendHeaders(true);
+
 require_once __DIR__ . '/../../core/Schema.php';
 require_once __DIR__ . '/../../core/Auth.php';
 require_once __DIR__ . '/../../core/Csrf.php';

@@ -1,9 +1,9 @@
 <?php
 $adminTitle = 'Logs de Auditoria';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
+require_once dirname(__DIR__, 2) . '/core/Database.php';
+require_once dirname(__DIR__, 2) . '/core/Helpers.php';
+require_once dirname(__DIR__, 2) . '/core/Auth.php';
 
 Auth::requireRole('SUPER_ADMIN');
 
@@ -22,12 +22,12 @@ $stmt = $db->prepare("
     FROM audit_logs l 
     LEFT JOIN admins a ON l.admin_id = a.id 
     ORDER BY l.created_at DESC 
-    LIMIT {$perPage} OFFSET {$offset}
+    LIMIT ? OFFSET ?
 ");
-$stmt->execute();
+$stmt->execute([$perPage, $offset]);
 $logs = $stmt->fetchAll();
 
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/layout/header.php';
 ?>
 
 <div class="admin-card">
@@ -103,4 +103,4 @@ require_once __DIR__ . '/../layout/header.php';
   <?php endif; ?>
 </div>
 
-<?php require_once __DIR__ . '/../layout/footer.php'; ?>
+<?php require_once __DIR__ . '/layout/footer.php'; ?>

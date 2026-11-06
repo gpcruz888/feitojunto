@@ -3,21 +3,11 @@
  * CSRF Protection — feito.
  * Validação de tokens de proteção contra requisições forjadas.
  */
+require_once __DIR__ . '/Security.php';
+
 class Csrf {
     private static function startSession(): void {
-        if (session_status() === PHP_SESSION_NONE) {
-            $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
-                       (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-            session_set_cookie_params([
-                'lifetime' => 0,
-                'path' => '/',
-                'domain' => '',
-                'secure' => $isHttps,
-                'httponly' => true,
-                'samesite' => 'Strict'
-            ]);
-            session_start();
-        }
+        Security::startSecureSession();
     }
 
     public static function getToken(): string {
@@ -25,6 +15,12 @@ class Csrf {
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
+        return $_SESSION['csrf_token'];
+    }
+
+    public static function rotateToken(): string {
+        self::startSession();
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         return $_SESSION['csrf_token'];
     }
 
@@ -40,7 +36,7 @@ class Csrf {
             $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
         }
 
-        if (empty($_SESSION['csrf_token']) || empty($token)) {
+        if (!is_string($token) || empty($_SESSION['csrf_token']) || empty($token)) {
             return false;
         }
 

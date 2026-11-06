@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../core/Security.php';
+Security::sendHeaders(true);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../core/Auth.php';
@@ -14,13 +16,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
+$rawInput = file_get_contents('php://input');
+$input = is_string($rawInput) && $rawInput !== '' ? json_decode($rawInput, true) : null;
+if (!is_array($input) || empty($input)) {
     $input = $_POST;
 }
 
+$csrfToken = $input['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+if (!Csrf::validate($csrfToken)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Token de segurança inválido ou expirado. Recarregue a página.']);
+    exit;
+}
+
 $leadId = (int)($input['lead_id'] ?? 0);
-$note = trim($input['note'] ?? '');
+$note = mb_substr(trim((string)($input['note'] ?? '')), 0, 2000);
 
 if ($leadId <= 0 || empty($note)) {
     http_response_code(400);

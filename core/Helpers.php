@@ -4,6 +4,8 @@
  * Funções utilitárias reutilizáveis para o admin e blog.
  */
 
+require_once __DIR__ . '/Security.php';
+
 class Helpers {
     /**
      * Sanitiza saída para exibição segura em HTML
@@ -66,14 +68,10 @@ class Helpers {
     }
 
     /**
-     * Normaliza URL de capa (absoluta, relativa ou arquivo em /uploads)
+     * Normaliza URL de capa (absoluta, relativa ou arquivo em /uploads) com validação de segurança
      */
     public static function coverUrl(?string $path): string {
-        if (empty($path)) return '';
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
-            return $path;
-        }
-        return '/uploads/' . ltrim($path, '/');
+        return Security::sanitizeCoverUrl($path);
     }
 
     /**

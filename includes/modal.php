@@ -14,6 +14,7 @@
         </div>
 
         <form class="modal-form" id="project-briefing-form">
+          <input type="text" name="_hp" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;">
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="form-nome">Seu nome <span class="req">*</span></label>

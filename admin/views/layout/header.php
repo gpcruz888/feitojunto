@@ -1,7 +1,11 @@
 <?php
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Security.php';
+Security::sendHeaders(true);
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+
+Auth::requireLogin();
 
 $currentUser = Auth::user();
 $pageTitle = $adminTitle ?? 'Painel';

@@ -1,6 +1,8 @@
 <?php
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+
+Auth::requireLogin();
 
 $currentRoute = $currentRoute ?? 'dashboard';
 $user = Auth::user();

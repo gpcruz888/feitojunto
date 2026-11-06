@@ -1,0 +1,49 @@
+name: Deploy para HostGator
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Validar Segurança e Publicar via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Executar suíte de segurança e regressão
+        run: python3 tests/security_suite.py
+
+      - name: Enviar arquivos atualizados para a HostGator
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          server-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.DS_Store
+            .github/**
+            tests/**
+            .env
+            .env.*
+            ADMIN.md
+            data/*.sqlite*
+            data/*.db*
+            uploads/blog/*.jpg
+            uploads/blog/*.jpeg
+            uploads/blog/*.png
+            uploads/blog/*.webp
+            uploads/blog/*.gif
+

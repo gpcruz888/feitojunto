@@ -1,15 +1,21 @@
 <?php
 $adminTitle = 'Gerenciamento de Leads';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+
+Auth::requireLogin();
 
 $db = Database::getInstance();
 
 // Filtros
-$search = trim($_GET['q'] ?? '');
-$statusFilter = trim($_GET['status'] ?? '');
+$search = trim((string)($_GET['q'] ?? ''));
+$statusFilter = trim((string)($_GET['status'] ?? ''));
+$allowedStatuses = ['NOVO', 'EM_CONTATO', 'QUALIFICADO', 'CONVERTIDO', 'PERDIDO', 'ARQUIVADO'];
+if (!empty($statusFilter) && !in_array($statusFilter, $allowedStatuses, true)) {
+    $statusFilter = '';
+}
 $page = max(1, (int)($_GET['p'] ?? 1));
 $perPage = 15;
 $offset = ($page - 1) * $perPage;

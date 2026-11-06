@@ -1,9 +1,12 @@
 <?php
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
-require_once __DIR__ . '/../../../core/Logger.php';
+require_once dirname(__DIR__, 3) . '/core/Security.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Logger.php';
+
+Auth::requireLogin();
 
 $db = Database::getInstance();
 $postId = (int)($_GET['id'] ?? 0);
@@ -56,17 +59,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Csrf::validate()) {
         $errorMessage = 'Sessão expirada. Por favor tente novamente.';
     } else {
-        $title = trim($_POST['title'] ?? '');
-        $slug = trim($_POST['slug'] ?? '');
+        $title = trim((string)($_POST['title'] ?? ''));
+        $slug = trim((string)($_POST['slug'] ?? ''));
         $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
-        $excerpt = trim($_POST['excerpt'] ?? '');
-        $content = trim($_POST['content'] ?? '');
-        $status = in_array($_POST['status'] ?? '', ['RASCUNHO', 'PUBLICADO', 'ARQUIVADO']) ? $_POST['status'] : 'RASCUNHO';
-        $seoTitle = trim($_POST['seo_title'] ?? '');
-        $seoDesc = trim($_POST['seo_description'] ?? '');
-        $ogTitle = trim($_POST['og_title'] ?? '');
-        $ogDesc = trim($_POST['og_description'] ?? '');
-        $coverImage = trim($_POST['cover_image'] ?? $post['cover_image']);
+        $excerpt = trim((string)($_POST['excerpt'] ?? ''));
+        $content = Security::sanitizeHtml(trim((string)($_POST['content'] ?? '')));
+        $status = in_array($_POST['status'] ?? '', ['RASCUNHO', 'PUBLICADO', 'ARQUIVADO'], true) ? $_POST['status'] : 'RASCUNHO';
+        $seoTitle = trim((string)($_POST['seo_title'] ?? ''));
+        $seoDesc = trim((string)($_POST['seo_description'] ?? ''));
+        $ogTitle = trim((string)($_POST['og_title'] ?? ''));
+        $ogDesc = trim((string)($_POST['og_description'] ?? ''));
+        $coverImage = Security::sanitizeCoverUrl(trim((string)($_POST['cover_image'] ?? $post['cover_image'])));
 
         // Geração automática de slug se estiver vazio
         if (empty($slug)) {
@@ -98,18 +101,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $mime = finfo_file($finfo, $f['tmp_name']);
                 finfo_close($finfo);
+                $imgInfo = @getimagesize($f['tmp_name']);
 
-                if (in_array($mime, $allowed, true) && $f['size'] <= 5 * 1024 * 1024) {
+                if (in_array($mime, $allowed, true) && $imgInfo !== false && $f['size'] > 0 && $f['size'] <= 5 * 1024 * 1024) {
                     $ext = match ($mime) {
                         'image/jpeg' => 'jpg',
                         'image/png' => 'png',
                         'image/webp' => 'webp',
                         default => 'jpg'
                     };
-                    $targetDir = __DIR__ . '/../../../uploads/blog';
+                    $targetDir = dirname(__DIR__, 3) . '/uploads/blog';
                     if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
                     $newFilename = 'cover_' . bin2hex(random_bytes(16)) . '.' . $ext;
-                    if (move_uploaded_file($f['tmp_name'], $targetDir . '/' . $newFilename)) {
+                    $destPath = $targetDir . '/' . $newFilename;
+                    if (move_uploaded_file($f['tmp_name'], $destPath)) {
+                        @chmod($destPath, 0644);
                         $coverImage = '/uploads/blog/' . $newFilename;
                     }
                 }
@@ -168,7 +174,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $tSlug = Helpers::slugify($tName);
 
                     $db->prepare("INSERT OR IGNORE INTO tags (name, slug) VALUES (?, ?)")->execute([$tName, $tSlug]);
-                    $tagId = $db->query("SELECT id FROM tags WHERE slug = " . $db->quote($tSlug))->fetchColumn();
+                    $tagLookup = $db->prepare("SELECT id FROM tags WHERE slug = ? LIMIT 1");
+                    $tagLookup->execute([$tSlug]);
+                    $tagId = $tagLookup->fetchColumn();
 
                     if ($tagId) {
                         $db->prepare("INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?, ?)")->execute([$postId, $tagId]);

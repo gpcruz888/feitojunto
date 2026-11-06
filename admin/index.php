@@ -3,8 +3,12 @@
  * Front Controller da Área Administrativa — feito.
  * Roteamento central e proteção unificada de rotas.
  */
+define('FEITO_ADMIN_ROUTER', true);
 
-// Inicializa configurações e banco
+// Inicializa configurações, segurança e banco
+require_once __DIR__ . '/../core/Security.php';
+Security::sendHeaders(true);
+
 require_once __DIR__ . '/../core/Schema.php';
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/Csrf.php';

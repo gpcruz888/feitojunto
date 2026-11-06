@@ -1,9 +1,11 @@
 <?php
 $adminTitle = 'Dashboard';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
+require_once dirname(__DIR__, 2) . '/core/Database.php';
+require_once dirname(__DIR__, 2) . '/core/Helpers.php';
+require_once dirname(__DIR__, 2) . '/core/Auth.php';
+
+Auth::requireLogin();
 
 $db = Database::getInstance();
 

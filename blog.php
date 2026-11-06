@@ -153,10 +153,7 @@ require_once __DIR__ . '/includes/header.php';
       <!-- ==================== 3. ARTIGO EM DESTAQUE ==================== -->
       <?php if ($featuredPost): ?>
         <?php
-          $featCover = $featuredPost['cover_image'] ?? '';
-          if (!empty($featCover) && !str_starts_with($featCover, 'http') && !str_starts_with($featCover, '/')) {
-            $featCover = '/uploads/' . $featCover;
-          }
+          $featCover = Helpers::coverUrl($featuredPost['cover_image'] ?? '');
           $featDate = formatShortDate($featuredPost['published_at'] ?: $featuredPost['created_at']);
           $featTime = getReadTime($featuredPost['content']);
           $featCat = $featuredPost['category_name'] ?? 'Design & Produto';
@@ -230,10 +227,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="journal-more__grid">
               <?php foreach ($morePosts as $post): ?>
                 <?php
-                  $pCover = $post['cover_image'] ?? '';
-                  if (!empty($pCover) && !str_starts_with($pCover, 'http') && !str_starts_with($pCover, '/')) {
-                    $pCover = '/uploads/' . $pCover;
-                  }
+                  $pCover = Helpers::coverUrl($post['cover_image'] ?? '');
                   $pDate = formatShortDate($post['published_at'] ?: $post['created_at']);
                   $pTime = getReadTime($post['content']);
                   $pCat  = $post['category_name'] ?? 'Design & Produto';

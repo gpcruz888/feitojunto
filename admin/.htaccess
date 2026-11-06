@@ -15,6 +15,9 @@ DirectoryIndex index.php
 RewriteEngine On
 RewriteBase /admin/
 
+# 0. Bloqueia acesso HTTP direto às pastas internas de views e auth
+RewriteRule ^(views|auth)(/|$) - [F,L]
+
 # 1. Arquivos estáticos reais (CSS, JS, fontes, imagens, assets)
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]

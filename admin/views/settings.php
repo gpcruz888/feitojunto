@@ -1,11 +1,11 @@
 <?php
 $adminTitle = 'Configurações Globais';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
-require_once __DIR__ . '/../../../core/Logger.php';
+require_once dirname(__DIR__, 2) . '/core/Database.php';
+require_once dirname(__DIR__, 2) . '/core/Helpers.php';
+require_once dirname(__DIR__, 2) . '/core/Auth.php';
+require_once dirname(__DIR__, 2) . '/core/Csrf.php';
+require_once dirname(__DIR__, 2) . '/core/Logger.php';
 
 Auth::requireRole('SUPER_ADMIN');
 
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Carrega configurações atuais
 $allSettings = $db->query("SELECT key, value FROM settings")->fetchAll(PDO::FETCH_KEY_PAIR);
 
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/layout/header.php';
 ?>
 
 <?php if (!empty($errorMessage)): ?>
@@ -188,4 +188,4 @@ require_once __DIR__ . '/../layout/header.php';
   </div>
 </form>
 
-<?php require_once __DIR__ . '/../layout/footer.php'; ?>
+<?php require_once __DIR__ . '/layout/footer.php'; ?>

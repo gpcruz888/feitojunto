@@ -1,0 +1,58 @@
+# ============================================================
+# feito. — Root Security & Clean URLs Configuration
+# ============================================================
+
+Options -Indexes +FollowSymLinks
+DirectoryIndex index.php
+ServerSignature Off
+
+# 1. Bloqueia acesso a arquivos ocultos (.env, .git, .DS_Store, etc.) e arquivos sensíveis
+<FilesMatch "(^\.|(?i)\.(env|sqlite|sqlite3|sqlite-shm|sqlite-wal|db|log|md|sql|sh|bak|swp|dist)$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 2. Cabeçalhos HTTP de Segurança para recursos estáticos e páginas
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), focus-without-user-activation=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+</IfModule>
+
+# 3. Roteamento e Bloqueio de Diretórios Internos
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Bloqueia acesso direto a diretórios internos de código, dados e testes
+    RewriteRule ^(core|includes|data|tests)(/|$) - [F,L]
+
+    # Ignora pasta /admin (possui .htaccess próprio)
+    RewriteRule ^admin(/.*)?$ - [L]
+
+    # Arquivos e diretórios reais permitidos
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Rotas amigáveis da API
+    RewriteRule ^api/track/?$ api/track.php [QSA,L]
+    RewriteRule ^api/send-mail/?$ api/send-mail.php [QSA,L]
+
+    # Rotas amigáveis do Blog e Institucional
+    RewriteRule ^blog/?$ blog.php [QSA,L]
+    RewriteRule ^blog/([a-zA-Z0-9_-]+)/?$ blog-post.php?slug=$1 [QSA,L]
+    RewriteRule ^politica-de-privacidade/?$ politica-de-privacidade.php [QSA,L]
+
+    # Cases de projetos
+    RewriteCond %{DOCUMENT_ROOT}/projetos/$1.php -f
+    RewriteRule ^projetos/([a-zA-Z0-9_-]+)/?$ projetos/$1.php [QSA,L]
+</IfModule>

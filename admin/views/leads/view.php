@@ -1,10 +1,13 @@
 <?php
 $adminTitle = 'Detalhes do Lead';
 
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Helpers.php';
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Helpers.php';
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Csrf.php';
+require_once dirname(__DIR__, 3) . '/core/Logger.php';
+
+Auth::requireLogin();
 
 $db = Database::getInstance();
 $leadId = (int)($_GET['id'] ?? 0);
@@ -14,30 +17,37 @@ if ($leadId <= 0) {
     exit;
 }
 
-// Processa inclusão de nota via POST tradicional
+// Processa inclusão de nota ou alteração de status via POST tradicional
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (Csrf::validate()) {
+        $allowedStatuses = ['NOVO', 'EM_CONTATO', 'QUALIFICADO', 'CONVERTIDO', 'PERDIDO', 'ARQUIVADO'];
         if (!empty($_POST['new_status'])) {
-            $newStatus = trim($_POST['new_status']);
-            $up = $db->prepare("UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP, last_contact_at = CURRENT_TIMESTAMP WHERE id = ?");
-            $up->execute([$newStatus, $leadId]);
+            $newStatus = trim((string)$_POST['new_status']);
+            if (in_array($newStatus, $allowedStatuses, true)) {
+                $up = $db->prepare("UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP, last_contact_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $up->execute([$newStatus, $leadId]);
 
-            $adminUser = Auth::user();
-            $adminName = $adminUser['name'] ?? 'Administrador';
-            $hist = $db->prepare("INSERT INTO lead_history (lead_id, admin_id, action, description) VALUES (?, ?, 'STATUS_CHANGED', ?)");
-            $hist->execute([$leadId, Auth::id(), "Status alterado para '{$newStatus}' por {$adminName}"]);
+                $adminUser = Auth::user();
+                $adminName = $adminUser['name'] ?? 'Administrador';
+                $hist = $db->prepare("INSERT INTO lead_history (lead_id, admin_id, action, description) VALUES (?, ?, 'STATUS_CHANGED', ?)");
+                $hist->execute([$leadId, Auth::id(), "Status alterado para '{$newStatus}' por {$adminName}"]);
+                Logger::log('LEAD_STATUS_UPDATE', 'lead', $leadId, "Status do lead #{$leadId} alterado para {$newStatus}");
+            }
         }
 
         if (!empty($_POST['note'])) {
-            $noteText = trim($_POST['note']);
-            $adminUser = Auth::user();
-            $adminName = $adminUser['name'] ?? 'Administrador';
+            $noteText = mb_substr(trim((string)$_POST['note']), 0, 2000);
+            if ($noteText !== '') {
+                $adminUser = Auth::user();
+                $adminName = $adminUser['name'] ?? 'Administrador';
 
-            $hist = $db->prepare("INSERT INTO lead_history (lead_id, admin_id, action, description) VALUES (?, ?, 'NOTE_ADDED', ?)");
-            $hist->execute([$leadId, Auth::id(), "Nota de {$adminName}: " . strip_tags($noteText)]);
+                $hist = $db->prepare("INSERT INTO lead_history (lead_id, admin_id, action, description) VALUES (?, ?, 'NOTE_ADDED', ?)");
+                $hist->execute([$leadId, Auth::id(), "Nota de {$adminName}: " . strip_tags($noteText)]);
 
-            $up = $db->prepare("UPDATE leads SET last_contact_at = CURRENT_TIMESTAMP WHERE id = ?");
-            $up->execute([$leadId]);
+                $up = $db->prepare("UPDATE leads SET last_contact_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $up->execute([$leadId]);
+                Logger::log('LEAD_NOTE_ADDED', 'lead', $leadId, "Nota adicionada ao lead #{$leadId}");
+            }
         }
     }
 }

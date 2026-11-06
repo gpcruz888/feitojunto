@@ -190,13 +190,14 @@ class Schema {
         $adminCount = (int)$stmt->fetchColumn();
 
         if ($adminCount === 0) {
-            $defaultPass = 'FeitoAdmin@2026!';
+            $defaultPass = (string)Env::get('ADMIN_INITIAL_PASSWORD', 'FeitoAdmin@2026!');
+            $defaultEmail = (string)Env::get('ADMIN_INITIAL_EMAIL', 'admin@feitojunto.com');
             $hash = password_hash($defaultPass, PASSWORD_DEFAULT);
             $insert = $db->prepare("
                 INSERT INTO admins (name, email, password_hash, role, status)
                 VALUES (?, ?, ?, 'SUPER_ADMIN', 'ATIVO')
             ");
-            $insert->execute(['Gabriel - feito.', 'admin@feitojunto.com', $hash]);
+            $insert->execute(['Gabriel - feito.', $defaultEmail, $hash]);
         }
 
         // Seed Categorias Padrão

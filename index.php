@@ -236,6 +236,22 @@ require_once __DIR__ . '/includes/header.php';
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
         </a>
       </div>
+
+      <article class="gestcorp-feature gestcorp-enter" aria-labelledby="gestcorp-destaque">
+        <div class="gestcorp-feature__copy">
+          <h3 id="gestcorp-destaque">gestcorp<span>.</span></h3>
+          <p>design e desenvolvimento do site do curso de especialização da eca/usp.</p>
+          <div class="gestcorp-actions">
+            <a href="/projetos/gestcorp" class="btn btn--gestcorp">ver projeto</a>
+            <a href="https://gestcorp.eca.usp.br/" target="_blank" rel="noopener" class="btn btn--glass">ver ao vivo</a>
+          </div>
+        </div>
+        <img class="gestcorp-image" src="/assets/projetos/gestcorp/abertura-1200.webp"
+          srcset="/assets/projetos/gestcorp/abertura-720.webp 720w, /assets/projetos/gestcorp/abertura-1200.webp 1200w, /assets/projetos/gestcorp/abertura.webp 1920w"
+          sizes="(max-width: 768px) calc(100vw - 48px), (max-width: 1240px) 57vw, 700px"
+          width="1200" height="645" alt="Página inicial do Gestcorp com a navegação da ECA-USP e uma fotografia em sala de aula"
+          loading="lazy" decoding="async">
+      </article>
     </div>
 
     <!-- Continuous Hardware-Accelerated Rolling Carousel (Infinite Marquee) -->
@@ -410,14 +426,12 @@ require_once __DIR__ . '/includes/header.php';
             <?php
               $coverUrl = '';
               if (!empty($post['cover_image'])) {
-                $img = $post['cover_image'];
-                $coverUrl = (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0 || strpos($img, '/') === 0)
-                  ? htmlspecialchars($img)
-                  : '/uploads/' . htmlspecialchars($img);
+                $safeCover = Security::sanitizeCoverUrl($post['cover_image']);
+                $coverUrl = htmlspecialchars($safeCover, ENT_QUOTES, 'UTF-8');
               }
               $catName  = $post['category_name'] ?? 'Blog';
               $pubDate  = $post['published_at'] ? date('d M Y', strtotime($post['published_at'])) : '';
-              $excerpt  = $post['excerpt'] ? htmlspecialchars(mb_substr($post['excerpt'], 0, 130)) . '…' : '';
+              $excerpt  = $post['excerpt'] ? htmlspecialchars(mb_substr($post['excerpt'], 0, 130), ENT_QUOTES, 'UTF-8') . '…' : '';
               $numStr   = str_pad((string)($i + 1), 2, '0', STR_PAD_LEFT);
             ?>
             <article class="blog-recent__card reveal reveal-d<?php echo ($i + 1); ?>" onclick="location.href='/blog/<?php echo htmlspecialchars($post['slug']); ?>'">
@@ -498,6 +512,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="cta-card__form-container">
           <div id="modal-form-wrapper">
             <form class="modal-form" id="project-briefing-form">
+              <input type="text" name="_hp" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;">
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="form-nome">Seu nome <span class="req">*</span></label>

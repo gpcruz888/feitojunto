@@ -3,6 +3,9 @@
  * Head Component — feito.
  * Accepts optional $pageTitle and $pageDescription variables.
  */
+require_once __DIR__ . '/../core/Security.php';
+Security::sendHeaders(false);
+
 if (!isset($pageTitle)) {
     $pageTitle = 'feito. presença digital feita do jeito certo.';
 }
@@ -15,8 +18,9 @@ if (!isset($pageDescription)) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="<?php echo htmlspecialchars($pageDescription); ?>">
-  <title><?php echo htmlspecialchars($pageTitle); ?></title>
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
+  <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
 
   <!-- Start cookieyes banner -->
   <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/de6f787ad9c59e3c016c6a241b79ac64/script.js"></script>

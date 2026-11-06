@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../core/Security.php';
+Security::sendHeaders(false);
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -20,9 +22,9 @@ try {
 }
 
 $inputJSON = file_get_contents('php://input');
-$input = json_decode($inputJSON, true);
+$input = is_string($inputJSON) && $inputJSON !== '' ? json_decode($inputJSON, true) : null;
 
-if (!$input) {
+if (!is_array($input) || empty($input)) {
     $input = $_POST;
 }
 
@@ -33,15 +35,15 @@ if (!empty($input['company_website']) || !empty($input['_hp'])) {
     exit;
 }
 
-// 2. Sanitização dos campos
-$nome = trim(strip_tags($input['nome'] ?? ''));
-$email = filter_var(trim($input['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-$whatsapp = trim(strip_tags($input['whatsapp'] ?? ''));
-$empresa = trim(strip_tags($input['empresa'] ?? ''));
-$tipoProjeto = trim(strip_tags($input['tipo_projeto'] ?? 'Geral'));
-$orcamento = trim(strip_tags($input['prazo_orcamento'] ?? $input['orcamento'] ?? 'Não especificado'));
-$mensagem = trim(strip_tags($input['mensagem'] ?? 'Sem mensagem'));
-$source = trim(strip_tags($input['source'] ?? 'site_modal'));
+// 2. Sanitização e limitação de tamanho dos campos (prevenção de DoS/bloat)
+$nome = mb_substr(trim(strip_tags((string)($input['nome'] ?? ''))), 0, 120);
+$email = mb_substr(filter_var(trim((string)($input['email'] ?? '')), FILTER_SANITIZE_EMAIL), 0, 150);
+$whatsapp = mb_substr(trim(strip_tags((string)($input['whatsapp'] ?? ''))), 0, 40);
+$empresa = mb_substr(trim(strip_tags((string)($input['empresa'] ?? ''))), 0, 120);
+$tipoProjeto = mb_substr(trim(strip_tags((string)($input['tipo_projeto'] ?? 'Geral'))), 0, 80);
+$orcamento = mb_substr(trim(strip_tags((string)($input['prazo_orcamento'] ?? $input['orcamento'] ?? 'Não especificado'))), 0, 120);
+$mensagem = mb_substr(trim(strip_tags((string)($input['mensagem'] ?? 'Sem mensagem'))), 0, 4000);
+$source = mb_substr(trim(strip_tags((string)($input['source'] ?? 'site_modal'))), 0, 50);
 
 // 3. Validação dos campos obrigatórios
 if (empty($nome) || empty($email) || empty($whatsapp) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -53,22 +55,40 @@ if (empty($nome) || empty($email) || empty($whatsapp) || !filter_var($email, FIL
     exit;
 }
 
-// 4. Rate Limiting de envio (máximo 10 requisições por hora por IP)
-$ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-if (str_contains($ip, ',')) {
-    $ip = trim(explode(',', $ip)[0]);
-}
+// 4. Rate Limiting de envio (máximo 10 requisições por hora por IP e 60 globais por hora)
+$ip = Security::getClientIp();
 
 try {
     $db = Database::getInstance();
 
-    // Verifica limite de submissões
+    if (Security::isRateLimited($db, 'lead_submit', $ip, 10, 60)) {
+        Logger::log('LEAD_RATE_LIMITED', 'lead', null, "Submissão de lead bloqueada por rate limit (IP: {$ip})");
+        http_response_code(429);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Muitas solicitações enviadas recentemente. Aguarde alguns minutos ou chame no WhatsApp.'
+        ]);
+        exit;
+    }
+
+    // Verifica limite global de submissões na última hora contra ataques distribuídos
     $rateStmt = $db->prepare("
         SELECT COUNT(*) FROM leads 
         WHERE created_at > datetime('now', '-1 hour')
     ");
     $rateStmt->execute();
-    // Proteção global simples contra DDoS no formulário
+    $hourlyLeads = (int)$rateStmt->fetchColumn();
+    if ($hourlyLeads >= 60) {
+        Logger::log('LEAD_GLOBAL_THROTTLE', 'lead', null, "Limite global de leads por hora atingido");
+        http_response_code(429);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Serviço temporariamente sobrecarregado. Por favor, entre em contato via WhatsApp.'
+        ]);
+        exit;
+    }
+
+    Security::recordRateLimitHit($db, 'lead_submit', $ip);
 
     // 5. Salva o Lead no banco de dados PRIMEIRO (Fonte da verdade)
     $stmt = $db->prepare("
@@ -108,16 +128,14 @@ try {
     ];
 
     // 7. Notifica por e-mail (se falhar, o lead permanece salvo com segurança no banco)
-    $mailSent = Mailer::notifyNewLead($leadData);
+    Mailer::notifyNewLead($leadData);
 
     // 8. Envia confirmação automática se estiver ativada
     Mailer::sendAutoReply($leadData);
 
     echo json_encode([
         'success' => true,
-        'message' => 'Briefing recebido com sucesso! Nossa equipe entrará em contato em breve.',
-        'lead_id' => $leadId,
-        'mail_sent' => $mailSent
+        'message' => 'Briefing recebido com sucesso! Nossa equipe entrará em contato em breve.'
     ]);
 
 } catch (Exception $e) {

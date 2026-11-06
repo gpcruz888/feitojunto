@@ -1,14 +1,20 @@
 <?php
-require_once __DIR__ . '/../../../core/Auth.php';
-require_once __DIR__ . '/../../../core/Database.php';
-require_once __DIR__ . '/../../../core/Logger.php';
+require_once dirname(__DIR__, 3) . '/core/Security.php';
+Security::sendHeaders(true);
+require_once dirname(__DIR__, 3) . '/core/Auth.php';
+require_once dirname(__DIR__, 3) . '/core/Database.php';
+require_once dirname(__DIR__, 3) . '/core/Logger.php';
 
 Auth::requireLogin();
 
 $db = Database::getInstance();
 
-$search = trim($_GET['q'] ?? '');
-$statusFilter = trim($_GET['status'] ?? '');
+$search = trim((string)($_GET['q'] ?? ''));
+$statusFilter = trim((string)($_GET['status'] ?? ''));
+$allowedStatuses = ['NOVO', 'EM_CONTATO', 'QUALIFICADO', 'CONVERTIDO', 'PERDIDO', 'ARQUIVADO'];
+if (!empty($statusFilter) && !in_array($statusFilter, $allowedStatuses, true)) {
+    $statusFilter = '';
+}
 
 $where = [];
 $params = [];
@@ -62,16 +68,16 @@ fputcsv($output, [
 foreach ($leads as $l) {
     fputcsv($output, [
         $l['id'],
-        $l['nome'],
-        $l['email'],
-        $l['whatsapp'],
-        $l['empresa'],
-        $l['tipo_projeto'],
-        $l['prazo_orcamento'],
-        $l['mensagem'],
-        $l['source'],
-        $l['status'],
-        $l['created_at']
+        Security::sanitizeCsvValue($l['nome']),
+        Security::sanitizeCsvValue($l['email']),
+        Security::sanitizeCsvValue($l['whatsapp']),
+        Security::sanitizeCsvValue($l['empresa']),
+        Security::sanitizeCsvValue($l['tipo_projeto']),
+        Security::sanitizeCsvValue($l['prazo_orcamento']),
+        Security::sanitizeCsvValue($l['mensagem']),
+        Security::sanitizeCsvValue($l['source']),
+        Security::sanitizeCsvValue($l['status']),
+        Security::sanitizeCsvValue($l['created_at'])
     ], ';');
 }
 

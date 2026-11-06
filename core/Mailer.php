@@ -6,6 +6,7 @@
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Env.php';
 require_once __DIR__ . '/Logger.php';
+require_once __DIR__ . '/Security.php';
 
 class Mailer {
     /**
@@ -19,22 +20,29 @@ class Mailer {
         $stmt->execute();
         $toConfig = $stmt->fetchColumn();
 
-        $to = !empty($toConfig) ? $toConfig : Env::get('ADMIN_NOTIFICATION_EMAIL', 'gabriel@feitojunto.com, contato@feitojunto.com');
-        $fromEmail = Env::get('MAIL_FROM_EMAIL', 'noreply@feitojunto.com');
-        $fromName = Env::get('MAIL_FROM_NAME', 'feito. Notificações');
+        $toRaw = !empty($toConfig) ? $toConfig : Env::get('ADMIN_NOTIFICATION_EMAIL', 'gabriel@feitojunto.com, contato@feitojunto.com');
+        $to = Security::sanitizeMailHeader((string)$toRaw);
+        $fromEmail = Security::sanitizeMailHeader((string)Env::get('MAIL_FROM_EMAIL', 'noreply@feitojunto.com'));
+        if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+            $fromEmail = 'noreply@feitojunto.com';
+        }
+        $fromName = Security::sanitizeMailHeader((string)Env::get('MAIL_FROM_NAME', 'feito. Notificações'));
 
-        $nome = htmlspecialchars($lead['nome'] ?? 'Não informado');
-        $email = htmlspecialchars($lead['email'] ?? 'Não informado');
-        $whatsapp = htmlspecialchars($lead['whatsapp'] ?? 'Não informado');
-        $tipo = htmlspecialchars($lead['tipo_projeto'] ?? 'Geral');
-        $orcamento = htmlspecialchars($lead['prazo_orcamento'] ?? 'Não informado');
-        $mensagem = nl2br(htmlspecialchars($lead['mensagem'] ?? 'Sem mensagem'));
+        $rawNome = Security::sanitizeMailHeader((string)($lead['nome'] ?? 'Não informado'));
+        $rawEmail = Security::sanitizeMailHeader((string)($lead['email'] ?? ''));
+
+        $nome = htmlspecialchars($rawNome, ENT_QUOTES, 'UTF-8');
+        $email = htmlspecialchars($rawEmail ?: 'Não informado', ENT_QUOTES, 'UTF-8');
+        $whatsapp = htmlspecialchars($lead['whatsapp'] ?? 'Não informado', ENT_QUOTES, 'UTF-8');
+        $tipo = htmlspecialchars($lead['tipo_projeto'] ?? 'Geral', ENT_QUOTES, 'UTF-8');
+        $orcamento = htmlspecialchars($lead['prazo_orcamento'] ?? 'Não informado', ENT_QUOTES, 'UTF-8');
+        $mensagem = nl2br(htmlspecialchars($lead['mensagem'] ?? 'Sem mensagem', ENT_QUOTES, 'UTF-8'));
         $data = date('d/m/Y \à\s H:i');
-        $leadId = $lead['id'] ?? 0;
-        $appUrl = rtrim(Env::get('APP_URL', 'https://feitojunto.com'), '/');
-        $leadUrl = "{$appUrl}/admin/leads?id={$leadId}";
+        $leadId = (int)($lead['id'] ?? 0);
+        $appUrl = rtrim((string)Env::get('APP_URL', 'https://feitojunto.com'), '/');
+        $leadUrl = "{$appUrl}/admin/leads/view?id={$leadId}";
 
-        $subject = "=?UTF-8?B?" . base64_encode("Novo Lead no Site: {$nome} — feito.") . "?=";
+        $subject = "=?UTF-8?B?" . base64_encode("Novo Lead no Site: {$rawNome} — feito.") . "?=";
 
         $body = "
         <!DOCTYPE html>
@@ -113,10 +121,12 @@ class Mailer {
         $headers = [
             'MIME-Version: 1.0',
             'Content-type: text/html; charset=UTF-8',
-            "From: {$fromName} <{$fromEmail}>",
-            "Reply-To: {$nome} <{$email}>",
-            'X-Mailer: PHP/' . phpversion()
+            "From: {$fromName} <{$fromEmail}>"
         ];
+        if (!empty($rawEmail) && filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
+            $safeReplyName = preg_replace('/["<>]/', '', $rawNome);
+            $headers[] = "Reply-To: \"{$safeReplyName}\" <{$rawEmail}>";
+        }
 
         $sent = @mail($to, $subject, $body, implode("\r\n", $headers));
 
@@ -151,16 +161,19 @@ class Mailer {
             return false;
         }
 
-        $to = $lead['email'] ?? '';
+        $to = Security::sanitizeMailHeader((string)($lead['email'] ?? ''));
         if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return false;
         }
 
-        $fromEmail = Env::get('MAIL_FROM_EMAIL', 'noreply@feitojunto.com');
-        $fromName = Env::get('MAIL_FROM_NAME', 'feito.');
-        $subjectText = $configs['auto_reply_subject'] ?? 'Recebemos seu projeto — feito.';
+        $fromEmail = Security::sanitizeMailHeader((string)Env::get('MAIL_FROM_EMAIL', 'noreply@feitojunto.com'));
+        if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+            $fromEmail = 'noreply@feitojunto.com';
+        }
+        $fromName = Security::sanitizeMailHeader((string)Env::get('MAIL_FROM_NAME', 'feito.'));
+        $subjectText = Security::sanitizeMailHeader((string)($configs['auto_reply_subject'] ?? 'Recebemos seu projeto — feito.'));
         $subject = "=?UTF-8?B?" . base64_encode($subjectText) . "?=";
-        $messageBody = nl2br(htmlspecialchars($configs['auto_reply_message'] ?? 'Recebemos sua mensagem com sucesso.'));
+        $messageBody = nl2br(htmlspecialchars($configs['auto_reply_message'] ?? 'Recebemos sua mensagem com sucesso.', ENT_QUOTES, 'UTF-8'));
 
         $body = "
         <!DOCTYPE html>
@@ -180,8 +193,7 @@ class Mailer {
         $headers = [
             'MIME-Version: 1.0',
             'Content-type: text/html; charset=UTF-8',
-            "From: {$fromName} <{$fromEmail}>",
-            'X-Mailer: PHP/' . phpversion()
+            "From: {$fromName} <{$fromEmail}>"
         ];
 
         return @mail($to, $subject, $body, implode("\r\n", $headers));
