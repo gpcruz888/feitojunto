@@ -200,6 +200,42 @@ class Schema {
             $insert->execute(['Gabriel - feito.', $defaultEmail, $hash]);
         }
 
+        // Migração única de redefinição de acesso administrativo (executa apenas 1 vez por banco)
+        $recStmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_recovery_v1'");
+        $recStmt->execute();
+        if ($recStmt->fetchColumn() !== '1') {
+            $resetPass = (string)Env::get('ADMIN_INITIAL_PASSWORD', 'FeitoAdmin@2026!');
+            $resetHash = password_hash($resetPass, PASSWORD_DEFAULT);
+
+            foreach (['admin@feitojunto.com', 'gabriel@feitojunto.com'] as $admEmail) {
+                $chk = $db->prepare("SELECT id FROM admins WHERE LOWER(email) = LOWER(?) LIMIT 1");
+                $chk->execute([$admEmail]);
+                $existingId = $chk->fetchColumn();
+
+                if ($existingId) {
+                    $upAdm = $db->prepare("
+                        UPDATE admins
+                        SET password_hash = ?, role = 'SUPER_ADMIN', status = 'ATIVO', updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    ");
+                    $upAdm->execute([$resetHash, $existingId]);
+                } else {
+                    $insAdm = $db->prepare("
+                        INSERT INTO admins (name, email, password_hash, role, status)
+                        VALUES ('Gabriel - feito.', ?, ?, 'SUPER_ADMIN', 'ATIVO')
+                    ");
+                    $insAdm->execute([$admEmail, $resetHash]);
+                }
+            }
+
+            // Limpa eventuais bloqueios temporários de tentativas anteriores
+            $db->exec("DELETE FROM login_attempts WHERE email NOT LIKE 'rl:%'");
+
+            $db->exec("DELETE FROM settings WHERE key = 'admin_recovery_v1'");
+            $markDone = $db->prepare("INSERT INTO settings (key, value) VALUES ('admin_recovery_v1', '1')");
+            $markDone->execute();
+        }
+
         // Seed Categorias Padrão
         $catStmt = $db->query("SELECT COUNT(*) as total FROM categories");
         if ((int)$catStmt->fetchColumn() === 0) {

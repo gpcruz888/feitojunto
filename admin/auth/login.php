@@ -56,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,600,500,400,300&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/css/variables.css?v=<?= time(); ?>">
+  <link rel="stylesheet" href="/css/components/buttons.css?v=<?= time(); ?>">
   <link rel="stylesheet" href="/admin/assets/css/admin.css?v=<?= time(); ?>">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png?v=3">
 </head>
@@ -114,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
         Entrar no Painel
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
       </button>
     </form>
 

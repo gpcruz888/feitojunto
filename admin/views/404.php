@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>404 Página Não Encontrada | feito.</title>
   <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/components/buttons.css">
   <link rel="stylesheet" href="/admin/assets/css/admin.css">
 </head>
 <body class="admin-login-body">

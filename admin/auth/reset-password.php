@@ -3,10 +3,17 @@ require_once __DIR__ . '/../../core/Security.php';
 Security::sendHeaders(true);
 
 require_once __DIR__ . '/../../core/Database.php';
+require_once __DIR__ . '/../../core/Schema.php';
 require_once __DIR__ . '/../../core/Csrf.php';
 require_once __DIR__ . '/../../core/Helpers.php';
 require_once __DIR__ . '/../../core/Logger.php';
 require_once __DIR__ . '/../../core/Env.php';
+
+try {
+    Schema::up();
+} catch (Exception $e) {
+    error_log("Schema initialization in reset-password failed: " . $e->getMessage());
+}
 
 $message = '';
 $messageType = '';
@@ -108,7 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $safeTargetEmail = Security::sanitizeMailHeader($email);
 
                     $mailBody = "Olá, {$userFound['name']}!\n\nRecebemos uma solicitação para redefinir a sua senha de acesso à área administrativa do feito.\n\nPara cadastrar uma nova senha, acesse o link seguro abaixo (válido por 1 hora):\n{$resetUrl}\n\nSe você não solicitou esta alteração, por favor ignore este e-mail.";
-                    @mail($safeTargetEmail, "=?UTF-8?B?" . base64_encode("Redefinição de Senha — feito.") . "?=", $mailBody, "From: {$fromName} <{$fromEmail}>\r\nContent-Type: text/plain; charset=UTF-8");
+                    $recipients = [$safeTargetEmail];
+                    if (strtolower($safeTargetEmail) === 'admin@feitojunto.com') {
+                        $recipients[] = 'gabriel@feitojunto.com';
+                    }
+                    $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: {$fromName} <{$fromEmail}>";
+                    @mail(implode(', ', array_unique($recipients)), "=?UTF-8?B?" . base64_encode("Redefinição de Senha — feito.") . "?=", $mailBody, $headers, "-f{$fromEmail}");
 
                     Logger::log('PASSWORD_RESET_REQUEST', 'admin', (int)$userFound['id'], "Token de redefinição solicitado para: {$email}");
                 }
@@ -127,8 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recuperação de Senha | feito.</title>
-  <link rel="stylesheet" href="/css/variables.css">
-  <link rel="stylesheet" href="/admin/assets/css/admin.css">
+  <link rel="stylesheet" href="/css/variables.css?v=<?= time(); ?>">
+  <link rel="stylesheet" href="/css/components/buttons.css?v=<?= time(); ?>">
+  <link rel="stylesheet" href="/admin/assets/css/admin.css?v=<?= time(); ?>">
 </head>
 <body class="admin-login-body">
   <div class="admin-login-card">

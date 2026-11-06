@@ -3,6 +3,15 @@
    Herda estritamente os tokens de variables.css e feito-DESIGN.md
    ============================================================ */
 
+@import url('/css/components/buttons.css');
+
+.btn svg,
+.btn-primary svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
 /* --- 1. Layout Base & Grid --- */
 .admin-body {
   background-color: var(--bg-dark);

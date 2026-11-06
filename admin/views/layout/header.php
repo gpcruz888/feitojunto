@@ -25,6 +25,7 @@ $pageTitle = $adminTitle ?? 'Painel';
 
   <!-- Core tokens and Admin Styles -->
   <link rel="stylesheet" href="/css/variables.css?v=<?= time(); ?>">
+  <link rel="stylesheet" href="/css/components/buttons.css?v=<?= time(); ?>">
   <link rel="stylesheet" href="/admin/assets/css/admin.css?v=<?= time(); ?>">
   
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png?v=3">
