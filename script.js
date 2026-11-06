@@ -92,7 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
   );
-  revealElements.forEach(el => revealObserver.observe(el));
+  revealElements.forEach(el => {
+    revealObserver.observe(el);
+    if (el.classList.contains('gestcorp-enter')) el.classList.add('is-observed');
+  });
 
   let statsAnimated = false;
   function triggerStatsCounter() {

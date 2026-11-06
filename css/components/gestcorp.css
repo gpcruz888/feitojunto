@@ -11,6 +11,12 @@
   margin-bottom: clamp(40px, 6vw, 76px);
 }
 
+.gestcorp-logo {
+  width: clamp(132px, 16vw, 164px);
+  height: auto;
+  margin-bottom: 16px;
+}
+
 .gestcorp-feature h3,
 .gestcorp-case__title {
   font-weight: 900;
@@ -57,11 +63,15 @@
   outline-offset: 4px;
 }
 
+.gestcorp-frame {
+  overflow: hidden;
+  border: 1px solid var(--glass-dark-border);
+  border-radius: var(--radius-md);
+}
+
 .gestcorp-image {
   width: 100%;
   height: auto;
-  border: 1px solid var(--glass-dark-border);
-  border-radius: var(--radius-md);
 }
 
 .gestcorp-case {
@@ -138,7 +148,7 @@
   color: var(--text-dark-65);
 }
 
-.gestcorp-case__section--soft .gestcorp-image {
+.gestcorp-case__section--soft .gestcorp-frame {
   border-color: var(--glass-light-border);
 }
 
@@ -165,11 +175,11 @@
   column-gap: 0;
 }
 
-.gestcorp-case__people img:first-child {
+.gestcorp-case__people .gestcorp-frame:first-child {
   grid-column: 1 / 11;
 }
 
-.gestcorp-case__people img:last-child {
+.gestcorp-case__people .gestcorp-frame:last-child {
   grid-column: 5 / -1;
 }
 
@@ -195,8 +205,8 @@
     gap: 12px 24px;
   }
 
-  .gestcorp-case__people img:first-child,
-  .gestcorp-case__people img:last-child {
+  .gestcorp-case__people .gestcorp-frame:first-child,
+  .gestcorp-case__people .gestcorp-frame:last-child {
     grid-column: 1 / -1;
   }
 }
@@ -206,20 +216,41 @@
     grid-template-columns: 1fr;
   }
 
-  .gestcorp-case__devices img:last-child {
+  .gestcorp-case__devices .gestcorp-frame:last-child {
     max-width: 280px;
     justify-self: center;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .gestcorp-enter.is-visible {
-    animation: gestcorp-enter 0.6s var(--ease) both;
+  .gestcorp-enter.is-observed:is(.is-visible, :focus-within) {
+    transition: opacity 0.7s var(--ease), transform 0.85s var(--ease);
   }
 
-  @keyframes gestcorp-enter {
-    from { opacity: 0.65; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+  .gestcorp-enter.is-observed:not(.is-visible):not(:focus-within) {
+    opacity: 0.2;
+    transform: translateY(24px);
+  }
+
+  .gestcorp-enter--delay.is-visible:not(:focus-within) {
+    transition-delay: 0.12s;
+  }
+}
+
+@media (min-width: 769px) and (min-height: 660px) and (prefers-reduced-motion: no-preference) {
+  .gestcorp-case__structure-copy {
+    position: sticky;
+    top: 128px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .gestcorp-image {
+    transition: transform 0.75s var(--ease);
+  }
+
+  .gestcorp-frame:hover .gestcorp-image {
+    transform: scale(1.045);
   }
 }
 

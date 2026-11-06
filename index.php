@@ -237,8 +237,10 @@ require_once __DIR__ . '/includes/header.php';
         </a>
       </div>
 
-      <article class="gestcorp-feature gestcorp-enter" aria-labelledby="gestcorp-destaque">
-        <div class="gestcorp-feature__copy">
+      <article class="gestcorp-feature" aria-labelledby="gestcorp-destaque">
+        <div class="gestcorp-feature__copy gestcorp-enter">
+          <img class="gestcorp-logo" src="/assets/projetos/gestcorp/eca-usp.png" width="328" height="144"
+            alt="eca/usp — escola de comunicações e artes da universidade de são paulo" loading="lazy" decoding="async">
           <h3 id="gestcorp-destaque">gestcorp<span>.</span></h3>
           <p>design e desenvolvimento do site do curso de especialização da eca/usp.</p>
           <div class="gestcorp-actions">
@@ -246,11 +248,13 @@ require_once __DIR__ . '/includes/header.php';
             <a href="https://gestcorp.eca.usp.br/" target="_blank" rel="noopener" class="btn btn--glass">ver ao vivo</a>
           </div>
         </div>
-        <img class="gestcorp-image" src="/assets/projetos/gestcorp/abertura-1200.webp"
-          srcset="/assets/projetos/gestcorp/abertura-720.webp 720w, /assets/projetos/gestcorp/abertura-1200.webp 1200w, /assets/projetos/gestcorp/abertura.webp 1920w"
-          sizes="(max-width: 768px) calc(100vw - 48px), (max-width: 1240px) 57vw, 700px"
-          width="1200" height="645" alt="Página inicial do Gestcorp com a navegação da ECA-USP e uma fotografia em sala de aula"
-          loading="lazy" decoding="async">
+        <div class="gestcorp-frame gestcorp-enter gestcorp-enter--delay">
+          <img class="gestcorp-image" src="/assets/projetos/gestcorp/abertura-1200.webp"
+            srcset="/assets/projetos/gestcorp/abertura-720.webp 720w, /assets/projetos/gestcorp/abertura-1200.webp 1200w, /assets/projetos/gestcorp/abertura.webp 1920w"
+            sizes="(max-width: 768px) calc(100vw - 48px), (max-width: 1240px) 57vw, 700px"
+            width="1200" height="645" alt="página inicial do gestcorp com a navegação da eca-usp e uma fotografia em sala de aula"
+            loading="lazy" decoding="async">
+        </div>
       </article>
     </div>
 
